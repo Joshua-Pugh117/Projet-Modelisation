@@ -60,7 +60,7 @@ ALTER TABLE "personne" ADD CONSTRAINT "personne_fk1" FOREIGN KEY ("id_mere") REF
 ALTER TABLE "commune" ADD CONSTRAINT "commune_fk0" FOREIGN KEY ("id_departement") REFERENCES "departement"("id_departement");
 
 
-ALTER TABLE "acte" ADD CONSTRAINT "acte_fk0" FOREIGN KEY ("type_acte") REFERENCES "type_Valide"("nom_type");
+ALTER TABLE "acte" ADD CONSTRAINT "acte_fk0" FOREIGN KEY ("type_acte") REFERENCES "type_valide"("nom_type");
 ALTER TABLE "acte" ADD CONSTRAINT "acte_fk1" FOREIGN KEY ("id_pers_A") REFERENCES "personne"("id_personne");
 ALTER TABLE "acte" ADD CONSTRAINT "acte_fk2" FOREIGN KEY ("id_pers_B") REFERENCES "personne"("id_personne");
 ALTER TABLE "acte" ADD CONSTRAINT "acte_fk3" FOREIGN KEY ("id_commune") REFERENCES "commune"("id_commune");
