@@ -34,8 +34,8 @@ CREATE TABLE "departement" (
 CREATE TABLE "acte" (
 	"id_acte" serial NOT NULL,
 	"type_acte" varchar NOT NULL,
-	"id_pers_A" integer NOT NULL,
-	"id_pers_B" integer NOT NULL,
+	"id_pers_a" integer NOT NULL,
+	"id_pers_b" integer NOT NULL,
 	"id_commune" integer NOT NULL,
 	"num_vue" varchar,
 	CONSTRAINT "acte_pk" PRIMARY KEY ("id_acte")
@@ -61,8 +61,8 @@ ALTER TABLE "commune" ADD CONSTRAINT "commune_fk0" FOREIGN KEY ("id_departement"
 
 
 ALTER TABLE "acte" ADD CONSTRAINT "acte_fk0" FOREIGN KEY ("type_acte") REFERENCES "type_valide"("nom_type");
-ALTER TABLE "acte" ADD CONSTRAINT "acte_fk1" FOREIGN KEY ("id_pers_A") REFERENCES "personne"("id_personne");
-ALTER TABLE "acte" ADD CONSTRAINT "acte_fk2" FOREIGN KEY ("id_pers_B") REFERENCES "personne"("id_personne");
+ALTER TABLE "acte" ADD CONSTRAINT "acte_fk1" FOREIGN KEY ("id_pers_a") REFERENCES "personne"("id_personne");
+ALTER TABLE "acte" ADD CONSTRAINT "acte_fk2" FOREIGN KEY ("id_pers_a") REFERENCES "personne"("id_personne");
 ALTER TABLE "acte" ADD CONSTRAINT "acte_fk3" FOREIGN KEY ("id_commune") REFERENCES "commune"("id_commune");
 
 
