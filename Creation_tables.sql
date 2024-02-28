@@ -37,6 +37,7 @@ CREATE TABLE "acte" (
 	"id_pers_a" integer NOT NULL,
 	"id_pers_b" integer NOT NULL,
 	"id_commune" integer NOT NULL,
+	"date" DATE NOT NULL,
 	"num_vue" varchar,
 	CONSTRAINT "acte_pk" PRIMARY KEY ("id_acte")
 ) WITH (
