@@ -45,9 +45,9 @@ CREATE TABLE "acte" (
 
 
 
-CREATE TABLE "type_Valide" (
+CREATE TABLE "type_valide" (
 	"nom_type" varchar NOT NULL,
-	CONSTRAINT "type_Valide_pk" PRIMARY KEY ("nom_type")
+	CONSTRAINT "type_valide_pk" PRIMARY KEY ("nom_type")
 ) WITH (
   OIDS=FALSE
 );
