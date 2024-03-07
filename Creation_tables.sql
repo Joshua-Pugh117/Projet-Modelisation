@@ -32,7 +32,7 @@ CREATE TABLE "departement" (
 
 
 CREATE TABLE "acte" (
-	"id_acte" serial NOT NULL,
+	"id_acte" NOT NULL, /*not serial,*/
 	"type_acte" varchar NOT NULL,
 	"id_pers_A" integer NOT NULL,
 	"id_pers_B" integer NOT NULL,
