@@ -14,7 +14,7 @@ CREATE TABLE "personne" (
 CREATE TABLE "commune" (
 	"id_commune" serial NOT NULL,
 	"nom_commune" varchar NOT NULL,
-	"id_departement" integer NOT NULL,
+	"id_departement" integer,/*can be null*/
 	CONSTRAINT "commune_pk" PRIMARY KEY ("id_commune")
 ) WITH (
   OIDS=FALSE
@@ -32,12 +32,12 @@ CREATE TABLE "departement" (
 
 
 CREATE TABLE "acte" (
-	"id_acte" NOT NULL, /*not serial,*/
+	"id_acte" integer NOT NULL, /*not serial,*/
 	"type_acte" varchar NOT NULL,
 	"id_pers_a" integer NOT NULL,
 	"id_pers_b" integer NOT NULL,
 	"id_commune" integer NOT NULL,
-	"date" DATE NOT NULL,
+	"date" DATE, /*can be null*/
 	"num_vue" varchar,
 	CONSTRAINT "acte_pk" PRIMARY KEY ("id_acte")
 ) WITH (

@@ -1,5 +1,7 @@
 import csv
 import psycopg2
+from datetime import datetime
+from itertools import islice
 
 # Connect to your postgres DB
 conn = psycopg2.connect("dbname=projet_modelisation user=postgres password=motdepasse")
@@ -8,8 +10,13 @@ conn = psycopg2.connect("dbname=projet_modelisation user=postgres password=motde
 cur = conn.cursor()
 cmt = 0
 # Open the CSV file
-with open('mariages\mariages_L3_5k.csv', 'r', encoding='utf-8') as f:
+with open('mariages\mariages_L3.csv', 'r', encoding='utf-8') as f:
     reader = csv.reader(f)
+
+    
+
+# with open('mariages\mariages_L3_5k.csv', 'r', encoding='utf-8') as f:
+#     reader = csv.reader(f)
 
 #---------------------------empty all---------------------------
     
@@ -48,10 +55,16 @@ with open('mariages\mariages_L3_5k.csv', 'r', encoding='utf-8') as f:
             "INSERT INTO type_valide (nom_type) VALUES (%s)", (i,)
         )
 
+    for _ in islice(reader, 20000):
+        pass
+
     for row in reader:
-        cmt += 1
-        if cmt == 10:
-            break
+        # cmt += 1
+        # if cmt == 10:
+        #     break
+        if row[1] not in types_actes:
+            print(f"{row[0]}, Skipping type: {row[1]}")
+            continue
 
 #---------------------------insert personneA---------------------------
         # Insert pere
@@ -59,22 +72,25 @@ with open('mariages\mariages_L3_5k.csv', 'r', encoding='utf-8') as f:
             cur.execute(
                 """
                 INSERT INTO personne (nom_personne, prenom_personne) 
-                VALUES (%s, %s)
-                """, (row[2],row[4])
+                select %s, %s
+                WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
+                """, (row[2],row[4],row[2],row[4])
             )
         # Insert mere
         if row[5] != "n/a" or row[6] != "n/a": #add check for parent with same name. and fix null verification (only insert if name and surname)
             cur.execute(
                 """
                 INSERT INTO personne (nom_personne, prenom_personne) 
-                VALUES (%s, %s)
-                """, (row[5],row[6])
+                select %s, %s
+                WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
+                """, (row[5],row[6],row[5],row[6])
             )
         cur.execute(
             """
             INSERT INTO personne (nom_personne, prenom_personne, id_pere, id_mere) 
-            VALUES (%s, %s, (select id_personne from personne where %s = nom_personne and %s = prenom_personne),(select id_personne from personne where %s = nom_personne and %s = prenom_personne))
-            """, (row[2], row[3], row[2],row[4], row[5],row[6])
+            select %s, %s, (select id_personne from personne where %s = nom_personne and %s = prenom_personne),(select id_personne from personne where %s = nom_personne and %s = prenom_personne)
+            WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
+            """, (row[2], row[3], row[2],row[4], row[5],row[6], row[2], row[3])
         )
 #---------------------------insert personneB---------------------------
         # Insert pere
@@ -82,50 +98,77 @@ with open('mariages\mariages_L3_5k.csv', 'r', encoding='utf-8') as f:
             cur.execute(
                 """
                 INSERT INTO personne (nom_personne, prenom_personne) 
-                VALUES (%s, %s)
-                """, (row[7],row[9])
+                select %s, %s
+                WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
+                """, (row[7],row[9], row[7],row[9])
             )
         # Insert mere
         if row[10] != "n/a" or row[11] != "n/a": #add check for parent with same name. and fix null verification (only insert if name and surname)
             cur.execute(
                 """
                 INSERT INTO personne (nom_personne, prenom_personne) 
-                VALUES (%s, %s)
-                """, (row[10],row[11])
+                select %s, %s
+                WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
+                """, (row[10],row[11],row[10],row[11])
             )
         cur.execute(
             """
             INSERT INTO personne (nom_personne, prenom_personne, id_pere, id_mere) 
-            VALUES (%s, %s, (select id_personne from personne where %s = nom_personne and %s = prenom_personne),(select id_personne from personne where %s = nom_personne and %s = prenom_personne))
-            """, (row[7], row[8], row[7],row[9], row[10],row[11])
+            select %s, %s, (select id_personne from personne where %s = nom_personne and %s = prenom_personne),(select id_personne from personne where %s = nom_personne and %s = prenom_personne)
+            WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
+            """, (row[7], row[8], row[7],row[9], row[10],row[11], row[7], row[8])
         )
 #---------------------------insert commune---------------------------
+        test = "="
+        if row[13] == "n/a":
+            row[13] = None
+            test = "IS"
         cur.execute(
             """
             INSERT INTO commune (nom_commune, id_departement) 
             SELECT %s, %s
-            WHERE NOT EXISTS (SELECT 1 FROM commune WHERE nom_commune = %s AND id_departement = %s);
+            WHERE NOT EXISTS (SELECT 1 FROM commune WHERE nom_commune = %s AND id_departement """+test+""" %s);
             """, (row[12], row[13], row[12], row[13])
         )
 
-#---------------------------insert acte---------------------------
 
-        cur.execute(
-            """
-            INSERT INTO acte (id_acte, type_acte, id_pers_a, id_pers_b, id_commune, num_vue) 
-            VALUES (%s,
-                    %s, 
-                    (select id_personne from personne where %s = nom_personne and %s = prenom_personne limit 1),
-                    (select id_personne from personne where %s = nom_personne and %s = prenom_personne limit 1),
-                    (SELECT id_commune FROM commune WHERE nom_commune = %s AND id_departement = %s),
-                    %s)
-            """, (row[0],
-                  row[1], 
-                  row[2], row[3],
-                  row[7], row[8],
-                  row[12], row[13],
-                  row[15])
-        )
+#---------------------------insert acte---------------------------
+        
+        if row[14] != "n/a":
+            # Check if date_str is valid format
+            try:
+                date_obj = datetime.strptime(row[14], "%d/%m/%Y")
+                formatted_date = date_obj.strftime("%Y-%m-%d")
+            except ValueError:
+                print(f"{row[0]}, Skipping date: {row[14]}")
+        else:
+            formatted_date = None
+
+        # cur.execute("SELECT *  FROM commune WHERE nom_commune = %s and id_departement IS null", (row[12],))
+        # rowe = cur.fetchone()
+        # print(rowe)
+        try:
+            cur.execute(
+                """
+                INSERT INTO acte (id_acte, type_acte, id_pers_a, id_pers_b, id_commune, date, num_vue) 
+                VALUES (%s,
+                        %s, 
+                        (select id_personne from personne where %s = nom_personne and %s = prenom_personne),
+                        (select id_personne from personne where %s = nom_personne and %s = prenom_personne),
+                        (SELECT id_commune FROM commune WHERE nom_commune = %s AND id_departement """+ test +""" %s),
+                        %s,
+                        %s)
+                """, (row[0],
+                    row[1], 
+                    row[2], row[3],
+                    row[7], row[8],
+                    row[12], row[13],
+                    formatted_date,
+                    row[15])
+            )
+        except Exception as e:
+            print(f"Error: {e}")
+            print(f"Row: {row}")
 
 # Commit the changes and close the connection
 conn.commit()
