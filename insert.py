@@ -1,19 +1,18 @@
 import csv
 import psycopg2
 from datetime import datetime
-from itertools import islice
 import json
 from tqdm import tqdm
 
 # Connect to your postgres DB
-# conn = psycopg2.connect("dbname=projet_modelisation user=postgres password=motdepasse")
-break
+conn = psycopg2.connect("dbname=projet_modelisation user=anyafontenoy password=' '")
+
 # Open a cursor to perform database operations
 cur = conn.cursor()
-# cmt = 0
+
 # Open the CSV file
-with open('mariages\mariages_L3.csv', 'r', encoding='utf-8') as f:
-#     reader = csv.reader(f)
+with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fichier propre
+#with open('mariages/mariages_L3.csv', 'r', encoding='utf-8') as f: # Grand fichier non propre
 
     
 
@@ -58,17 +57,12 @@ with open('mariages\mariages_L3.csv', 'r', encoding='utf-8') as f:
             "INSERT INTO type_valide (nom_type) VALUES (%s)", (i,)
         )
 
-    # for _ in islice(reader, 119890):
-    #     pass
-
     # for row in reader:
     skiped = {"type": [], "date": []}
+
+    # Pour afficher la barre de progression 
     for row in tqdm(reader, desc="Loading" , unit="row", total=row_count):
-        # cmt += 1
-        # if cmt == 10:
-        #     break
         if row[1] not in types_actes:
-            # print(f"{row[0]}, Skipping type: {row[1]}")
             skiped.get("type").append(row)
             continue
 
@@ -146,15 +140,11 @@ with open('mariages\mariages_L3.csv', 'r', encoding='utf-8') as f:
                 date_obj = datetime.strptime(row[14], "%d/%m/%Y")
                 formatted_date = date_obj.strftime("%Y-%m-%d")
             except ValueError:
-                # print(f"{row[0]}, Skipping date: {row[14]}")
                 skiped.get("date").append(row)
                 pass
         else:
             formatted_date = None
 
-        # cur.execute("SELECT *  FROM commune WHERE nom_commune = %s and id_departement IS null", (row[12],))
-        # rowe = cur.fetchone()
-        # print(rowe)
         try:
             cur.execute(
                 """
@@ -184,6 +174,5 @@ cur.close()
 conn.close()
 
 # save skipped to json file
-with open('skipped.json', 'w') as f:
-    # json.dump(skiped, f)
-    json.dump(skiped, f, indent=2, sort_keys=True, default=str)
+# with open('skipped.json', 'w') as f:
+#     json.dump(skiped, f, indent=2, sort_keys=True, default=str)
