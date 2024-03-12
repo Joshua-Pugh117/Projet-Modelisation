@@ -6,8 +6,8 @@ import json
 from tqdm import tqdm
 
 # Connect to your postgres DB
-conn = psycopg2.connect("dbname=projet_modelisation user=postgres password=motdepasse")
-
+# conn = psycopg2.connect("dbname=projet_modelisation user=postgres password=motdepasse")
+break
 # Open a cursor to perform database operations
 cur = conn.cursor()
 # cmt = 0
