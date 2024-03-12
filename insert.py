@@ -13,14 +13,10 @@ cur = conn.cursor()
 # Open the CSV file
 with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fichier propre
 #with open('mariages/mariages_L3.csv', 'r', encoding='utf-8') as f: # Grand fichier non propre
-
-    
-
-# with open('mariages\mariages_L3_5k.csv', 'r', encoding='utf-8') as f:
-    reader = list(csv.reader(f))
+    reader = list(csv.reader(f)) # Convert to list to get the row count
     row_count = len(reader)
 
-#---------------------------empty all---------------------------
+#---------------------------Vide les table--------------------------
     
     cur.execute(
         "delete from acte;"
@@ -38,12 +34,12 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
         "delete from type_valide;"
     )
 
-#---------------------------insert departement---------------------------
+#---------------------------Insert departement---------------------------
     cur.execute(
         "INSERT INTO departement (id_departement) VALUES (%s),(%s),(%s),(%s)", (44,49,79,85)
     )
 
-#---------------------------insert type_Valide---------------------------
+#---------------------------Insert type_Valide---------------------------
     types_actes = ["Certificat de mariage", 
                    "Contrat de mariage", 
                    "Divorce", 
@@ -52,23 +48,25 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
                    "Publication de mariage",
                    "Rectification de mariage"]
     
+    # Insert type_valide
     for i in types_actes:
         cur.execute(
             "INSERT INTO type_valide (nom_type) VALUES (%s)", (i,)
         )
 
-    # for row in reader:
+    # creation d'un dictionnaire pour les lignes qui n'ont pas été insérées
     skiped = {"type": [], "date": []}
 
-    # Pour afficher la barre de progression 
+    # Recupére chauque ligne (tqdm our afficher la barre de progression)
     for row in tqdm(reader, desc="Loading" , unit="row", total=row_count):
+        # si le type d'acte n'est pas dans la liste des types valides, on le met dans le dictionnaire et on passe à la ligne suivante
         if row[1] not in types_actes:
             skiped.get("type").append(row)
             continue
 
-#---------------------------insert personneA---------------------------
+#---------------------------Insert personneA---------------------------
         # Insert pere
-        if row[4] != "n/a": #add check for parent with same name.
+        if row[4] != "n/a": 
             cur.execute(
                 """
                 INSERT INTO personne (nom_personne, prenom_personne) 
@@ -77,7 +75,7 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
                 """, (row[2],row[4],row[2],row[4])
             )
         # Insert mere
-        if row[5] != "n/a" or row[6] != "n/a": #add check for parent with same name. and fix null verification (only insert if name and surname)
+        if row[5] != "n/a" or row[6] != "n/a":
             cur.execute(
                 """
                 INSERT INTO personne (nom_personne, prenom_personne) 
@@ -85,6 +83,7 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
                 WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
                 """, (row[5],row[6],row[5],row[6])
             )
+        # Insert personneA
         cur.execute(
             """
             INSERT INTO personne (nom_personne, prenom_personne, id_pere, id_mere) 
@@ -92,9 +91,9 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
             WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
             """, (row[2], row[3], row[2],row[4], row[5],row[6], row[2], row[3])
         )
-#---------------------------insert personneB---------------------------
+#---------------------------Insert personneB---------------------------
         # Insert pere
-        if row[9] != "n/a": #add check for parent with same name.
+        if row[9] != "n/a":
             cur.execute(
                 """
                 INSERT INTO personne (nom_personne, prenom_personne) 
@@ -103,7 +102,7 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
                 """, (row[7],row[9], row[7],row[9])
             )
         # Insert mere
-        if row[10] != "n/a" or row[11] != "n/a": #add check for parent with same name. and fix null verification (only insert if name and surname)
+        if row[10] != "n/a" or row[11] != "n/a":
             cur.execute(
                 """
                 INSERT INTO personne (nom_personne, prenom_personne) 
@@ -111,6 +110,7 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
                 WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
                 """, (row[10],row[11],row[10],row[11])
             )
+        # Insert personneB
         cur.execute(
             """
             INSERT INTO personne (nom_personne, prenom_personne, id_pere, id_mere) 
@@ -118,34 +118,38 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
             WHERE NOT EXISTS (SELECT 1 FROM personne WHERE nom_personne = %s AND prenom_personne = %s);
             """, (row[7], row[8], row[7],row[9], row[10],row[11], row[7], row[8])
         )
-#---------------------------insert commune---------------------------
+#---------------------------Insert commune---------------------------
+        # si le département n'est pas dans la liste des départements, on le transforme en None
         test = "="
-        if row[13] == "n/a" or row[13] not in ["44", "49", "79", "85"]:
+        if row[13] not in ["44", "49", "79", "85"]:
             row[13] = None
             test = "IS"
+        # Insert commune
         cur.execute(
             """
             INSERT INTO commune (nom_commune, id_departement) 
             SELECT %s, %s
             WHERE NOT EXISTS (SELECT 1 FROM commune WHERE nom_commune = %s AND id_departement """+test+""" %s);
-            """, (row[12], row[13], row[12], row[13])
+            """, (row[12], row[13], row[12], row[13]) 
         )
 
 
-#---------------------------insert acte---------------------------
+#---------------------------Insert acte---------------------------
         
         if row[14] != "n/a":
-            # Check if date_str is valid format
+            # Verifie si la date est au bon format
             try:
                 date_obj = datetime.strptime(row[14], "%d/%m/%Y")
                 formatted_date = date_obj.strftime("%Y-%m-%d")
             except ValueError:
+                # si la date n'est pas au bon format, on la met dans le dictionnaire
                 skiped.get("date").append(row)
                 pass
         else:
             formatted_date = None
 
         try:
+            # Insert acte
             cur.execute(
                 """
                 INSERT INTO acte (id_acte, type_acte, id_pers_a, id_pers_b, id_commune, date, num_vue) 
@@ -156,13 +160,13 @@ with open('mariages/mariages_L3_5K.csv', 'r', encoding='utf-8') as f: # Petit fi
                         (SELECT id_commune FROM commune WHERE nom_commune = %s AND id_departement """+ test +""" %s),
                         %s,
                         %s)
-                """, (row[0],
-                    row[1], 
-                    row[2], row[3],
-                    row[7], row[8],
-                    row[12], row[13],
-                    formatted_date,
-                    row[15])
+                """, (row[0],        # id_acte
+                    row[1],          # type_acte
+                    row[2], row[3],  # nom et prenom personneA
+                    row[7], row[8],  # nom et prenom personneB
+                    row[12], row[13],# nom_commune et id_departement
+                    formatted_date,  # date
+                    row[15])         # num_vue
             )
         except Exception as e:
             print(f"Error: {e}")
@@ -174,5 +178,5 @@ cur.close()
 conn.close()
 
 # save skipped to json file
-# with open('skipped.json', 'w') as f:
-#     json.dump(skiped, f, indent=2, sort_keys=True, default=str)
+with open('skipped.json', 'w') as f:
+    json.dump(skiped, f, indent=2, sort_keys=True, default=str)
